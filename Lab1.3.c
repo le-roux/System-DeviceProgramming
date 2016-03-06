@@ -1,37 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 
-int number, work;
+int number;
 sem_t *ready, *mutex;
 
 void thread_func(int id);
-void server_func();
+void server_func(int sig_nb);
 
 int main(int argc, char** argv) {
-	pthread_t client1, client2, server;
-	work = 0;
+	pthread_t client1, client2;
 	ready = sem_open("/ready", O_CREAT, 0644, 0);
 	mutex = sem_open("/mutex", O_CREAT, 0644, 1);
-	pthread_create(&server, NULL, (void*) server_func,(void*) 0);
 	pthread_create(&client1, NULL,(void*) thread_func,(void*) 1);
 	pthread_create(&client2, NULL,(void*) thread_func,(void*) 2);
 	int ret = 0;
+	signal(SIGUSR1, server_func);
 	pthread_join(client1,(void**) ret);
 	pthread_join(client2,(void**) ret);
 	return 0;
 }
 
-void server_func() {
-	while(1) {
-		if(work) {
-			number *= 2;
-			work = 0;
-			sem_post(ready);
-		}
-	}
+void server_func(int sig_nb) {
+	sem_wait(mutex);
+	number *= 2;
+	sem_post(mutex);
+	sem_post(ready);
+	signal(SIGUSR1, server_func);
 }
 
 void thread_func(int id) {
@@ -52,8 +51,10 @@ void thread_func(int id) {
 			fclose(f);
 			break;
 		}
-		work = 1;
+		sem_post(mutex);
+		kill(getpid(), SIGUSR1);
 		sem_wait(ready);
+		sem_wait(mutex);
 		printf("id = %i  result = %i\n", id, number);
 		sem_post(mutex);
 	}
