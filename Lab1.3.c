@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-int number;
+int number, request_nb;
 sem_t *ready, *mutex;
 
 void thread_func(int id);
@@ -14,6 +14,7 @@ void server_func(int sig_nb);
 
 int main(int argc, char** argv) {
 	pthread_t client1, client2;
+	request_nb = 0;
 	ready = sem_open("/ready", O_CREAT, 0644, 0);
 	mutex = sem_open("/mutex", O_CREAT, 0644, 1);
 	pthread_create(&client1, NULL,(void*) thread_func,(void*) 1);
@@ -22,12 +23,14 @@ int main(int argc, char** argv) {
 	signal(SIGUSR1, server_func);
 	pthread_join(client1,(void**) ret);
 	pthread_join(client2,(void**) ret);
+	printf("Number of requests : %i\n",request_nb);
 	return 0;
 }
 
 void server_func(int sig_nb) {
 	sem_wait(mutex);
 	number *= 2;
+	request_nb++;
 	sem_post(mutex);
 	sem_post(ready);
 	signal(SIGUSR1, server_func);
