@@ -17,10 +17,12 @@ int main(int argc, char** argv) {
 	request_nb = 0;
 	ready = sem_open("/ready", O_CREAT, 0644, 0);
 	mutex = sem_open("/mutex", O_CREAT, 0644, 1);
+	signal(SIGUSR1, server_func);
+	
 	pthread_create(&client1, NULL,(void*) thread_func,(void*) 1);
 	pthread_create(&client2, NULL,(void*) thread_func,(void*) 2);
+	
 	int ret = 0;
-	signal(SIGUSR1, server_func);
 	pthread_join(client1,(void**) ret);
 	pthread_join(client2,(void**) ret);
 	printf("Number of requests : %i\n",request_nb);
