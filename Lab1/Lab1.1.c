@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 void exchange(int* a, int* b);
 void sort(int* src, int size);
@@ -19,6 +20,7 @@ int main(int argc, char** argv) {
 	v1 = malloc(n1 * sizeof(int));
 	v2 = malloc(n2 * sizeof(int));
 	//Fill the vectors with random numbers
+	srand(time(NULL));
 	for (int i = 0; i < n1; i++) {
 		*(v1 + i) = rand() % 91 + 10;
 	}
