@@ -1,0 +1,49 @@
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ make
+cc -std=gnu99 -lpthread    Lab1.1.c   -o Lab1.1
+cc -std=gnu99 -lpthread    Lab1.2.c   -o Lab1.2
+cc -std=gnu99 -lpthread    Lab1.3.c   -o Lab1.3
+
+Lab1.1 : 
+
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ ./Lab1.1 7 10
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ od --format=d fv1.txt
+0000000          10          19          37          49
+0000020          57          78          99
+0000034
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ od --format=d fv2.txt
+0000000          33          38          42          44
+0000020          49          60          80          84
+0000040         100         100
+0000050
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ od --format=d fv1.b
+0000000          10          19          37          49
+0000020          57          78          99
+0000034
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ od --format=d fv2.b
+0000000          33          38          42          44
+0000020          49          60          80          84
+0000040         100         100
+0000050
+
+Lab1.3
+
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab1$ ./Lab1.3
+id = 2  result = 66
+id = 2  result = 76
+id = 2  result = 84
+id = 2  result = 88
+id = 2  result = 98
+id = 2  result = 120
+id = 2  result = 160
+id = 2  result = 168
+id = 2  result = 200
+id = 2  result = 200
+id = 1  result = 20
+id = 1  result = 38
+id = 1  result = 74
+id = 1  result = 98
+id = 1  result = 114
+id = 1  result = 156
+id = 1  result = 198
+Number of requests : 17
+

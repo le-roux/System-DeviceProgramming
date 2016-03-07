@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 
 #define END_TIME 60
 
@@ -44,6 +45,7 @@ int main(int argc, char** argv) {
 	} else {
 		//Child process
 		int total_time = 0;
+		srand(time(NULL));
 		int time = rand() % 10 + 1;
 		while(total_time + time < END_TIME) {
 			signal(SIGALRM, timer);
