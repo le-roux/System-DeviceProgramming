@@ -15,8 +15,10 @@ void server_func(int sig_nb);
 int main(int argc, char** argv) {
 	pthread_t client1, client2;
 	request_nb = 0;
-	ready = sem_open("/ready", O_CREAT, 0644, 0);
-	mutex = sem_open("/mutex", O_CREAT, 0644, 1);
+	ready = (sem_t*) malloc(sizeof(sem_t));
+	sem_init(ready, 0, 0);
+	mutex = (sem_t*) malloc(sizeof(sem_t));
+	sem_init(mutex, 0, 1);
 	signal(SIGUSR1, server_func);
 	
 	pthread_create(&client1, NULL,(void*) thread_func,(void*) 1);
