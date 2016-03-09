@@ -9,9 +9,9 @@ merge(int *vet, int left, int middle, int right) {
 
     int L[n1], R[n2];  // temp arrays
     
-    for (i = 0; i < n1; i++)  // make a copy
+    for (i = 0; i <= n1; i++)  // make a copy
         L[i] = vet[left + i];
-    for (j = 0; j < n2; j++)
+    for (j = 0; j <= n2; j++)
         R[j] = vet[middle + 1 + j];
         
     // Merge the temp arrays in vet[l..r]
@@ -37,7 +37,7 @@ int middle;
 
   if (left < right){
     middle = left + (right - left)/2;  // Same as (left + right)/2, but avoids overflow for large l and r
- 
+    
     mergeSort(vet, left, middle);
     mergeSort(vet, middle+1, right);
  
@@ -48,6 +48,7 @@ int middle;
 int main(int argc, char ** argv) {
   int i, n, len;
   int *vet;
+
   if (argc != 2) {
     printf ("Syntax: %s dimension", argv[0]);
     return (1);
@@ -57,15 +58,18 @@ int main(int argc, char ** argv) {
 
   vet = (int*) malloc(n * sizeof(int));
   
+  srand(n);
+  
   for(i = 0;i < n;i++) {
     vet[i] = rand() % 100;
 	printf("%d\n",vet[i]);
   }
-  
-  mergeSort(vet, 0, n);
+	  
+  mergeSort(vet,0, n-1);
 
   printf("\n");
   for(i = 0;i < n;i++) 
 	printf("%d\n",vet[i]);
+	
   return 0;
 }

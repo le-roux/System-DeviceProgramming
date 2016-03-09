@@ -13,16 +13,15 @@ merge(int *vet, int left, int middle, int right) {
     int n1 = middle - left + 1;
     int n2 =  right - middle;
     int L[n1], R[n2];  // temp arrays
-    for (i = 0; i < n1; i++)  // make a copy
+    for (i = 0; i <= n1; i++)  // make a copy
         L[i] = vet[left + i];
-    for (j = 0; j < n2; j++)
+    for (j = 0; j <= n2; j++)
         R[j] = vet[middle + 1 + j];
     // Merge the temp arrays in vet[l..r]
     i = 0; 
     j = 0; 
     k = left; // Initial index of merged subarray
     while (i < n1 && j < n2)  {
-	  printf("k = %i L[%i] = %i R[%i] = %i\n", k, i, L[i], j, R[j]);
       if (L[i] <= R[j])
         vet[k++] = L[i++];
       else
@@ -86,7 +85,7 @@ int main(int argc, char ** argv) {
 	printf("%d\n",vet[i]);
   }
   sem_post(mutex);
-  int arg[2] = {0, n};
+  int arg[2] = {0, n-1};
   threaded_sort(arg);
 
   printf("\n");
