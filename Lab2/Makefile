@@ -7,3 +7,4 @@ clean :
 	rm -f Lab2.1
 	rm -f Lab2.2
 	rm -f Lab2.3_1
+	rm -f Lab2.3_2
