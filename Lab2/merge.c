@@ -1,10 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <semaphore.h>
-
-int* vet;
-sem_t* mutex;
 
 void 
 merge(int *vet, int left, int middle, int right) {
@@ -50,30 +45,9 @@ int middle;
   }
 }
 
-void threaded_sort(int* arg) {
-	int left, right, middle;
-	left = arg[0];
-	right = arg[1];
-	if (left < right) {
-		middle = left + (right - left)/2;
-		pthread_t thread1, thread2;
-		int arg1[2] = {left, middle};
-		pthread_create(&thread1, NULL,(void*) threaded_sort,(void*) arg1);
-		int arg2[2] = {middle + 1, right};
-		pthread_create(&thread2, NULL,(void*) threaded_sort,(void*) arg2);
-	
-		int* ret;
-		pthread_join(thread1,(void**) ret);
-		pthread_join(thread2,(void**) ret);
-		sem_wait(mutex);
-		merge(vet, left, middle, right);
-		sem_post(mutex);
-	}
-}
-
 int main(int argc, char ** argv) {
   int i, n, len;
-
+  int *vet;
   if (argc != 2) {
     printf ("Syntax: %s dimension", argv[0]);
     return (1);
@@ -83,21 +57,15 @@ int main(int argc, char ** argv) {
 
   vet = (int*) malloc(n * sizeof(int));
   
-  mutex = (sem_t*) malloc(sizeof(sem_t));
-  sem_init(mutex, 0, 1);
-  sem_wait(mutex);
   for(i = 0;i < n;i++) {
     vet[i] = rand() % 100;
 	printf("%d\n",vet[i]);
   }
-  sem_post(mutex);
-    int arg[2] = {0, n};
-  threaded_sort(arg);
+  
+  mergeSort(vet, 0, n);
 
   printf("\n");
-  sem_wait(mutex);
   for(i = 0;i < n;i++) 
 	printf("%d\n",vet[i]);
-  sem_post(mutex);
   return 0;
 }

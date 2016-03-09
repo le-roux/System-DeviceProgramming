@@ -1,7 +1,7 @@
 CFLAGS := -lpthread
 PHONY := clean
 
-main : Lab2.1
+main : Lab2.1 Lab2.2
 
 clean :
 	rm -f Lab2.1
