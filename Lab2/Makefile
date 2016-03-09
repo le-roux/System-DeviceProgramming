@@ -1,7 +1,7 @@
-CFLAGS := -lpthread
+CFLAGS := -lpthread -std=gnu99
 PHONY := clean
 
-main : Lab2.1 Lab2.2
+main : Lab2.1 Lab2.2 Lab2.3
 
 clean :
 	rm -f Lab2.1
