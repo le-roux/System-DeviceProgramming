@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <semaphore.h>
 
-int* vet;
+typedef struct Data {
+	int* vet;
+	pthread_mutex_t mutex;
+} Data;
+
 int threshold;
-sem_t* mutex;
+Data data;
 
 void 
 merge(int *vet, int left, int middle, int right) {
@@ -58,9 +61,9 @@ void threaded_sort(int* arg) {
 			threaded_sort(arg2);
 		}
 		
-		sem_wait(mutex);
-		merge(vet, left, middle, right);
-		sem_post(mutex);
+		pthread_mutex_lock(&data.mutex);
+		merge(data.vet, left, middle, right);
+		pthread_mutex_unlock(&data.mutex);
 	}
 }
 
@@ -75,23 +78,22 @@ int main(int argc, char ** argv) {
   n = atoi(argv[1]);
   threshold = atoi(argv[2]);
 
-  vet = (int*) malloc(n * sizeof(int));
+  data.vet = (int*) malloc(n * sizeof(int));
   
-  mutex = (sem_t*) malloc(sizeof(sem_t));
-  sem_init(mutex, 0, 1);
-  sem_wait(mutex);
+  pthread_mutex_init(&data.mutex, NULL);
+  pthread_mutex_lock(&data.mutex);
   for(i = 0;i < n;i++) {
-    vet[i] = rand() % 100;
-	printf("%d\n",vet[i]);
+    data.vet[i] = rand() % 100;
+	printf("%d\n",data.vet[i]);
   }
-  sem_post(mutex);
+  pthread_mutex_unlock(&data.mutex);
   int arg[2] = {0, n-1};
   threaded_sort(arg);
 
   printf("\n");
-  sem_wait(mutex);
+  pthread_mutex_lock(&data.mutex);
   for(i = 0;i < n;i++) 
-	printf("%d\n",vet[i]);
-  sem_post(mutex);
+	printf("%d\n",data.vet[i]);
+  pthread_mutex_unlock(&data.mutex);
   return 0;
 }
