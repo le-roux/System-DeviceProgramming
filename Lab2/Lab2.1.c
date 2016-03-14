@@ -56,7 +56,7 @@ void threaded_sort(int* arg) {
 		int arg2[2] = {middle + 1, right};
 		pthread_create(&thread2, NULL,(void*) threaded_sort,(void*) arg2);
 	
-		int* ret;
+		int* ret = NULL;
 		pthread_join(thread1,(void**) ret);
 		pthread_join(thread2,(void**) ret);
 		pthread_mutex_lock(&data.mutex);
@@ -66,7 +66,7 @@ void threaded_sort(int* arg) {
 }
 
 int main(int argc, char ** argv) {
-  int i, n, len;
+  int i, n;
 
   if (argc != 2) {
     printf ("Syntax: %s dimension\n", argv[0]);

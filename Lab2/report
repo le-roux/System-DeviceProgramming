@@ -1,0 +1,53 @@
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ make
+cc -lpthread -std=gnu99    Lab2.1.c   -o Lab2.1
+cc -lpthread -std=gnu99    Lab2.2.c   -o Lab2.2
+cc -lpthread -std=gnu99    Lab2.3_1.c   -o Lab2.3_1
+cc -lpthread -std=gnu99    Lab2.3_2.c   -o Lab2.3_2
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.1 10
+83
+86
+77
+15
+93
+35
+86
+92
+49
+21
+
+15
+21
+35
+49
+77
+83
+86
+86
+92
+93
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.2 10 3
+83
+86
+77
+15
+93
+35
+86
+92
+49
+21
+
+15
+21
+35
+49
+77
+83
+86
+86
+92
+93
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.3_1 15
+result = 0.251765
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.3_2 15
+result = 0.272882

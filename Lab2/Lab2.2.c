@@ -51,7 +51,7 @@ void threaded_sort(int* arg) {
 			int arg2[2] = {middle + 1, right};
 			pthread_create(&thread2, NULL,(void*) threaded_sort,(void*) arg2);
 	
-			int* ret;
+			int* ret = NULL;
 			pthread_join(thread1,(void**) ret);
 			pthread_join(thread2,(void**) ret);
 		} else {
@@ -68,7 +68,7 @@ void threaded_sort(int* arg) {
 }
 
 int main(int argc, char ** argv) {
-  int i, n, len;
+  int i, n;
 
   if (argc != 3) {
     printf ("Syntax: %s dimension threshold\n", argv[0]);
