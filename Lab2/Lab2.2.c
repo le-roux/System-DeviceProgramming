@@ -38,8 +38,10 @@ merge(int *vet, int left, int middle, int right) {
       vet[k++] = R[j++];
 }
  
-void threaded_sort(int* arg) {
+void* threaded_sort(void* args) {
+	int* arg = args;
 	int left, right, middle;
+	void* ret = NULL;
 	left = arg[0];
 	right = arg[1];
 	if (left < right) {
@@ -47,13 +49,12 @@ void threaded_sort(int* arg) {
 		if ((right - left) >= threshold) {
 			pthread_t thread1, thread2;
 			int arg1[2] = {left, middle};
-			pthread_create(&thread1, NULL,(void*) threaded_sort,(void*) arg1);
+			pthread_create(&thread1, NULL, threaded_sort, arg1);
 			int arg2[2] = {middle + 1, right};
-			pthread_create(&thread2, NULL,(void*) threaded_sort,(void*) arg2);
+			pthread_create(&thread2, NULL, threaded_sort, arg2);
 	
-			int* ret = NULL;
-			pthread_join(thread1,(void**) ret);
-			pthread_join(thread2,(void**) ret);
+			pthread_join(thread1, &ret);
+			pthread_join(thread2, &ret);
 		} else {
 			int arg1[2] = {left, middle};
 			int arg2[2] = {middle + 1, right};
@@ -65,6 +66,7 @@ void threaded_sort(int* arg) {
 		merge(data.vet, left, middle, right);
 		pthread_mutex_unlock(&data.mutex);
 	}
+	return ret;
 }
 
 int main(int argc, char ** argv) {
@@ -87,10 +89,11 @@ int main(int argc, char ** argv) {
 	printf("%d\n",data.vet[i]);
   }
   pthread_mutex_unlock(&data.mutex);
+  printf("\n");
+  
   int arg[2] = {0, n-1};
   threaded_sort(arg);
 
-  printf("\n");
   pthread_mutex_lock(&data.mutex);
   for(i = 0;i < n;i++) 
 	printf("%d\n",data.vet[i]);

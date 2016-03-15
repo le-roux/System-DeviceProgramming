@@ -1,9 +1,11 @@
 sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ make
-cc -lpthread -std=gnu99    Lab2.1.c   -o Lab2.1
-cc -lpthread -std=gnu99    Lab2.2.c   -o Lab2.2
-cc -lpthread -std=gnu99    Lab2.3_1.c   -o Lab2.3_1
-cc -lpthread -std=gnu99    Lab2.3_2.c   -o Lab2.3_2
-sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.1 10
+cc -lpthread -std=gnu99 -Wall -Wextra    Lab2.1.c   -o Lab2.1
+cc -lpthread -std=gnu99 -Wall -Wextra    Lab2.2.c   -o Lab2.2
+cc -lpthread -std=gnu99 -Wall -Wextra    Lab2.3_1.c   -o Lab2.3_1
+cc -lpthread -std=gnu99 -Wall -Wextra    Lab2.3_2.c   -o Lab2.3_2
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.1 
+Syntax: ./Lab2.1 dimension
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.1 7
 83
 86
 77
@@ -11,21 +13,15 @@ sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.1 10
 93
 35
 86
-92
-49
-21
 
 15
-21
 35
-49
 77
 83
 86
 86
-92
 93
-sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.2 10 3
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.2 7 3
 83
 86
 77
@@ -33,21 +29,28 @@ sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.2 10 3
 93
 35
 86
-92
-49
-21
 
 15
-21
 35
-49
 77
 83
 86
 86
-92
 93
-sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.3_1 15
-result = 0.251765
-sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.3_2 15
-result = 0.272882
+
+// Lab2.3_1 calculates T(v1) * mat * v2 with a sequential program
+
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.3_1 10
+result = -0.203419
+
+// Lab2.3_2 calculates T(v1) * mat * v2 with multiple threads
+
+/*
+ * For the purpose of comparing the result of the two programs, I didn't provide explicitly
+ * a seed to the pseudom random generator so that the "random" numbers generated are the
+ * same in the two programs
+ */
+
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab2$ ./Lab2.3_2 10
+result = -0.203419
+

@@ -9,7 +9,7 @@ typedef struct {
 	pthread_mutex_t mutex;
 } barrier;
 
-void thread_func(int i);
+void* thread_func(void* i);
 
 barrier b;
 float *v, *v1, *v2, *mat;
@@ -54,13 +54,18 @@ int main(int argc, char** argv) {
 	//v = mat * v2
 	v = (float*) malloc(k * sizeof(float));
 	pthread_t thread;
+	int* pi;
 	for (int i = 0; i < k; i++) {
-		pthread_create(&thread, NULL, (void*)thread_func,(void**) i);
+		pi = (int*)malloc(sizeof(int));
+		*pi = i;
+		pthread_create(&thread, NULL, thread_func, pi);
 	}
 	pthread_exit(0);
 }
 
-void thread_func(int i) {
+void* thread_func(void* arg) {
+	int* addr = arg;
+	int i = *addr;
 	v[i] = 0;
 	for (int j = 0; j < k; j++) {
 		v[i]+= mat[k * i + j] * v2[i];
@@ -69,12 +74,13 @@ void thread_func(int i) {
 	b.cnt--;
 	//Last thread to terminate
 	if (b.cnt == 0) {
-	//result = T(v1) * v
-	float result = 0;
-	for (int i = 0; i < k; i++) {
-		result += v1[i] * v[i];
-	}
-	printf("result = %f\n", result);
+		//result = T(v1) * v
+		float result = 0;
+		for (int i = 0; i < k; i++) {
+			result += v1[i] * v[i];
+		}
+		printf("result = %f\n", result);
 	}
 	pthread_mutex_unlock(&b.mutex);
+	return addr;
 }
