@@ -13,6 +13,7 @@ int main(int argc, char* argv[]) {
 		printf("Syntax : %s number_of_students\n", argv[0]);
 		return 1;
 	}
+	num_students = *(Num_students*)malloc(sizeof(Num_students));
 	pthread_mutex_init(&num_students.lock, NULL);
 	pthread_mutex_lock(&num_students.lock);
 	num_students.num = atoi(argv[1]);
@@ -24,6 +25,7 @@ int main(int argc, char* argv[]) {
 	special_Q = B_init(k);
 	urgent_Q = (Buffer**)malloc(sizeof(Buffer*) * NUM_OFFICES);
 	answer_Q = (Buffer**)malloc(sizeof(Buffer*) * k);
+
 
 	int* pi;
 	//Creation of the students threads
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]) {
 	//Creation of the special office thread
 	pthread_t special_thread;
 	pthread_create(&special_thread, NULL, special_office, NULL);
-
+	while(1);
 	return 0;
 }
 
@@ -53,8 +55,10 @@ Buffer* B_init(int dim) {
 	Buffer* buffer = (Buffer*)malloc(sizeof(Buffer));
 	buffer->buffer = (Info*)malloc(dim * sizeof(Info));
 	pthread_mutex_init(&buffer->lock, NULL);
+	buffer->notfull = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
 	pthread_cond_init(buffer->notfull, NULL);
-	pthread_cond_init(buffer->notempty, 0);
+	buffer->notempty = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+	pthread_cond_init(buffer->notempty, NULL);
 	buffer->in = 0;
 	buffer->out = 0;
 	buffer->count = 0;
@@ -137,7 +141,7 @@ void* special_office(void* arg) {
 void* student(void* arg) {
 	int* student_number = (int*)arg;
 	//Initialisation of the answer queue for this student
-	answer_Q[student_number] = B_init(3);
+	answer_Q[*student_number] = B_init(3);
 	volatile Info info = {*student_number, NUM_OFFICES, 0};
 
 	sleep(rand() % 9 + 1);
@@ -151,10 +155,11 @@ void* student(void* arg) {
 	if (info.urgent == 1) {
 		//This student needs additional information
 		//Go to the special queue
+		printf("student %i going from normal office to special office\n", info.id);
 		send(special_Q, info);
 		//Wait until special office has served us
 		info = receive(answer_Q[info.id]);
-		printf("student %i served by the special office\n", info.id);
+		printf("student %i going back to office %i\n", info.id, info.office_no);
 		//Go to the urgent queue of the proper office
 		send(urgent_Q[info.office_no], info);
 		//Wait until the office has served us
