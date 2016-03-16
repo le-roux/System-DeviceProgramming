@@ -65,18 +65,26 @@ Cond* cond_init(int n) {
 
 void send (Buffer* buf, Info info) {
 	pthread_mutex_lock(&buf->lock);
+	while (buf->count == buf->dim) {
+		pthread_cond_wait(buf->notfull, &buf->lock);
+	}
 	buf->buffer[buf->in] = info;
 	buf->in++;
 	//TO DO : in case of buffer overflow
+	buf->count++;
 	pthread_cond_broadcast(buf->notempty);
 	pthread_mutex_unlock(&buf->lock);
 }
 
 Info receive(Buffer* buf) {
 	pthread_mutex_lock(&buf->lock);
+	while (buf->count == 0) {
+		pthread_cond_wait(buf->notempty, &buf->lock);
+	}
 	Info info = buf->buffer[buf->out];
 	buf->out++;
 	//TO DO : cyclic buffer
+	buf->count--;
 	pthread_cond_broadcast(buf->notfull);
 	pthread_mutex_unlock(&buf->lock);
 	return info;
@@ -98,35 +106,28 @@ void* student(void* arg) {
 	//Initialisation of the answer queue for this student
 	answer_Q[student_number] = B_init(3);
 	volatile Info info = {*student_number, NUM_OFFICES, 0};
+	
 	//Go in the normal queue
 	send(normal_Q, info);
 	//Wait until an office served us
-	while (info.office_no == NUM_OFFICES) {
-		pthread_cond_wait(answer_Q[info.id]->notempty);
-		info = receive(answer_Q[student_number]);
-	}
-
+	info = receive(answer_Q[info.id]);
 	printf("student %i terminated after service at office %i\n", info.id, info.office_no); 
+	
 	if (info.urgent == 1) {
 		//This student needs additional information
+		//Go to the special queue
 		send(special_Q, info);
-		//Wait until special office has served him
-		while(info.urgent == 1) {
-			pthread_cond_wait(answer_Q[info.id]->notempty);
-			info = receive(answer_Q[info.id]);
-		}
+		//Wait until special office has served us
+		info = receive(answer_Q[info.id]);
 		printf("student %i served by the special office\n", info.id);
 		//Go to the urgent queue of the proper office
 		send(urgent_Q[info.office_no], info);
 		//Wait until the office has served us
-		while (info.office_no != NUM_OFFICES) {//Wrong condition
-			pthread_cond_wait(answer_Q[info.id]->notempty);
-			info = receive(answer_Q[info.id]);
-		}
+		info = receive(answer_Q[info.id]);
 		printf("student %i completed at office %i\n", info.id, info.office_no);
-
 	} else {
-
+		//nothing to do
 	}
+	printf("student %i terminated after service at office %i\n", info.id, info.office_no);
 	return arg;
 }
