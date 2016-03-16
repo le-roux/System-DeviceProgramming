@@ -45,8 +45,8 @@ Buffer* B_init(int dim) {
 	Buffer* buffer = (Buffer*)malloc(sizeof(Buffer));
 	buffer->buffer = (Info*)malloc(dim * sizeof(Info));
 	pthread_mutex_init(&buffer->lock, NULL);
-	buffer->notfull = cond_init(0);
-	buffer->notempty = cond_init(0);
+	pthread_cond_init(buffer->notfull, NULL);
+	pthread_cond_init(buffer->notempty, 0);
 	buffer->in = 0;
 	buffer->out = 0;
 	buffer->count = 0;
@@ -68,6 +68,7 @@ void send (Buffer* buf, Info info) {
 	buf->buffer[buf->in] = info;
 	buf->in++;
 	//TO DO : in case of buffer overflow
+	pthread_cond_broadcast(buf->notempty);
 	pthread_mutex_unlock(&buf->lock);
 }
 
@@ -76,6 +77,7 @@ Info receive(Buffer* buf) {
 	Info info = buf->buffer[buf->out];
 	buf->out++;
 	//TO DO : cyclic buffer
+	pthread_cond_broadcast(buf->notfull);
 	pthread_mutex_unlock(&buf->lock);
 	return info;
 }
@@ -85,13 +87,46 @@ void* office(void* arg) {
 	//Initialisation of the urgent queue for this office
 	urgent_Q[*office_number] = B_init(k/2);
 
+	while(1) {
+
+	}
 	return arg;
 }
 
 void* student(void* arg) {
 	int* student_number = (int*)arg;
 	//Initialisation of the answer queue for this student
-	answer_Q = B_init(3);
+	answer_Q[student_number] = B_init(3);
+	volatile Info info = {*student_number, NUM_OFFICES, 0};
+	//Go in the normal queue
+	send(normal_Q, info);
+	//Wait until an office served us
+	while (info.office_no == NUM_OFFICES) {
+		pthread_cond_wait(answer_Q[info.id]->notempty);
+		info = receive(answer_Q[student_number]);
+	}
 
+	printf("student %i terminated after service at office %i\n", info.id, info.office_no); 
+	if (info.urgent == 1) {
+		//This student needs additional information
+		send(special_Q, info);
+		//Wait until special office has served him
+		while(info.urgent == 1) {
+			pthread_cond_wait(answer_Q[info.id]->notempty);
+			info = receive(answer_Q[info.id]);
+		}
+		printf("student %i served by the special office\n", info.id);
+		//Go to the urgent queue of the proper office
+		send(urgent_Q[info.office_no], info);
+		//Wait until the office has served us
+		while (info.office_no != NUM_OFFICES) {//Wrong condition
+			pthread_cond_wait(answer_Q[info.id]->notempty);
+			info = receive(answer_Q[info.id]);
+		}
+		printf("student %i completed at office %i\n", info.id, info.office_no);
+
+	} else {
+
+	}
 	return arg;
 }
