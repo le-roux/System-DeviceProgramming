@@ -13,11 +13,13 @@ int main(int argc, char* argv[]) {
 		printf("Syntax : %s number_of_students\n", argv[0]);
 		return 1;
 	}
+	//Initialisation of num_students
 	num_students = *(Num_students*)malloc(sizeof(Num_students));
 	pthread_mutex_init(&num_students.lock, NULL);
 	pthread_mutex_lock(&num_students.lock);
 	num_students.num = atoi(argv[1]);
 	pthread_mutex_unlock(&num_students.lock);
+	
 	k = atoi(argv[1]);
 	srand(time(NULL));
 	//Creation of the queues
@@ -26,6 +28,8 @@ int main(int argc, char* argv[]) {
 	urgent_Q = (Buffer**)malloc(sizeof(Buffer*) * NUM_OFFICES);
 	answer_Q = (Buffer**)malloc(sizeof(Buffer*) * k);
 
+	
+	cond = cond_init(NUM_OFFICES + 1);
 
 	int* pi;
 	//Creation of the students threads
@@ -69,8 +73,9 @@ Buffer* B_init(int dim) {
 Cond* cond_init(int n) {
 	Cond* cond = (Cond*)malloc(sizeof(Cond));
 	pthread_mutex_init(&cond->lock, NULL);
+	cond->cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
 	pthread_cond_init(cond->cond, NULL);
-	cond->urgent = (int*)malloc((NUM_OFFICES + 1) * sizeof(int));
+	cond->urgent = (int*)malloc((n * sizeof(int)));
 	cond->normal = 0;
 	return cond;
 }
@@ -87,7 +92,7 @@ void send (Buffer* buf, Info info) {
 	pthread_cond_broadcast(buf->notempty);
 	//Set the value in Cond
 	pthread_mutex_lock(&cond->lock);
-	if (info.urgent == 0) {
+	if (info.urgent == 1) {
 		cond->urgent[info.id]++;
 	} else {
 		cond->normal++;
@@ -126,7 +131,7 @@ void* office(void* arg) {
 		if (cond->urgent[*office_number] != 0) {
 			cond->urgent[*office_number]--;
 			pthread_mutex_unlock(&cond->lock);
-			info = receive(urgent_Q[*office_number];
+			info = receive(urgent_Q[*office_number]);
 			printf("student %i received answer from office %i\n", info.id, *office_number);
 			sleep(1);
 			info.urgent = 0;
@@ -165,7 +170,6 @@ void* special_office(void* arg) {
 		info = receive(special_Q);
 		printf("student %i served by the special office\n", info.id);
 		sleep(rand() % 4 + 3);
-		info.urgent = 0; //not sure
 		send(answer_Q[info.id], info);
 	}
 	return arg;
@@ -178,7 +182,6 @@ void* student(void* arg) {
 	volatile Info info = {*student_number, NUM_OFFICES, 0};
 
 	sleep(rand() % 9 + 1);
-	
 	//Go in the normal queue
 	send(normal_Q, info);
 	//Wait until an office served us
@@ -202,6 +205,13 @@ void* student(void* arg) {
 		//nothing to do
 	}
 	printf("student %i terminated after service at office %i\n", info.id, info.office_no);
-	//TO DO : check if it's the last student to terminate
+	pthread_mutex_lock(&num_students.lock);
+	num_students.num--;
+	if (num_students.num == 0) {
+		//last student to terminate
+	} else {
+		printf("thread %i exits\n", info.id);
+		pthread_exit(arg);
+	}
 	return arg;
 }
