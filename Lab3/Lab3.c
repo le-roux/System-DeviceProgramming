@@ -70,8 +70,8 @@ Cond* cond_init(int n) {
 	Cond* cond = (Cond*)malloc(sizeof(Cond));
 	pthread_mutex_init(&cond->lock, NULL);
 	pthread_cond_init(cond->cond, NULL);
-	*cond->urgent = 0;
-	cond->normal = n;
+	cond->urgent = (int*)malloc((NUM_OFFICES + 1) * sizeof(int));
+	cond->normal = 0;
 	return cond;
 }
 
@@ -85,6 +85,15 @@ void send (Buffer* buf, Info info) {
 	//TO DO : in case of buffer overflow
 	buf->count++;
 	pthread_cond_broadcast(buf->notempty);
+	//Set the value in Cond
+	pthread_mutex_lock(&cond->lock);
+	if (info.urgent == 0) {
+		cond->urgent[info.id]++;
+	} else {
+		cond->normal++;
+	}
+	pthread_cond_broadcast(cond->cond);
+	pthread_mutex_unlock(&cond->lock);
 	pthread_mutex_unlock(&buf->lock);
 }
 
@@ -110,18 +119,34 @@ void* office(void* arg) {
 	Info info;
 	int urgent;
 	while(1) {
-		info = receive(normal_Q);
-		printf("student %i received answer from office %i\n", info.id, *office_number);
-		sleep(rand() % 4 + 3);
-		info.office_no = *office_number;
-		urgent = rand() % 10;
-		if (urgent < 4) {
-			//Special student
-			info.urgent = 1;
-		} else {
-			info.urgent = 0;
+		pthread_mutex_lock(&cond->lock);
+		while (cond->urgent[*office_number] == 0 && cond->normal == 0) {
+			pthread_cond_wait(cond->cond, &cond->lock);
 		}
-		send(answer_Q[info.id], info);
+		if (cond->urgent[*office_number] != 0) {
+			cond->urgent[*office_number]--;
+			pthread_mutex_unlock(&cond->lock);
+			info = receive(urgent_Q[*office_number];
+			printf("student %i received answer from office %i\n", info.id, *office_number);
+			sleep(1);
+			info.urgent = 0;
+			send(answer_Q[info.id], info);
+		} else {
+			cond->normal--;
+			pthread_mutex_unlock(&cond->lock);
+			info = receive(normal_Q);
+			printf("student %i received answer from office %i\n", info.id, *office_number);
+			sleep(rand() % 4 + 3);
+			info.office_no = *office_number;
+			urgent = rand() % 10;
+			if (urgent < 4) {
+				//Special student
+				info.urgent = 1;
+			} else {
+				info.urgent = 0;
+			}
+			send(answer_Q[info.id], info);
+		}
 	}
 	return arg;
 }
@@ -129,6 +154,14 @@ void* office(void* arg) {
 void* special_office(void* arg) {
 	Info info;
 	while(1) {
+		//Wait until someone arrives
+		pthread_mutex_lock(&cond->lock);
+		while (cond->urgent[NUM_OFFICES] == 0) {
+			pthread_cond_wait(cond->cond, &cond->lock);
+		}
+		cond->urgent[NUM_OFFICES]--;
+		pthread_mutex_unlock(&cond->lock);
+		//Serve him
 		info = receive(special_Q);
 		printf("student %i served by the special office\n", info.id);
 		sleep(rand() % 4 + 3);
