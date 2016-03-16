@@ -93,8 +93,15 @@ void send (Buffer* buf, Info info) {
 	//Set the value in Cond
 	pthread_mutex_lock(&cond->lock);
 	if (info.urgent == 1) {
-		cond->urgent[info.id]++;
-	} else {
+		if (buf == urgent_Q[info.id]) {
+			cond->urgent[info.id]++;
+			printf("urgent++ for %i\n", info.id);
+		} else if (buf == special_Q) {
+			printf("special for %i\n", info.id);
+			cond->urgent[NUM_OFFICES]++;
+		}
+	} else if (info.urgent == 0)
+	{
 		cond->normal++;
 	}
 	pthread_cond_broadcast(cond->cond);
@@ -129,6 +136,7 @@ void* office(void* arg) {
 			pthread_cond_wait(cond->cond, &cond->lock);
 		}
 		if (cond->urgent[*office_number] != 0) {
+			//Serve urgent request
 			cond->urgent[*office_number]--;
 			pthread_mutex_unlock(&cond->lock);
 			info = receive(urgent_Q[*office_number]);
@@ -137,6 +145,7 @@ void* office(void* arg) {
 			info.urgent = 0;
 			send(answer_Q[info.id], info);
 		} else {
+			//Serve normal request
 			cond->normal--;
 			pthread_mutex_unlock(&cond->lock);
 			info = receive(normal_Q);
@@ -198,6 +207,7 @@ void* student(void* arg) {
 		printf("student %i going back to office %i\n", info.id, info.office_no);
 		//Go to the urgent queue of the proper office
 		send(urgent_Q[info.office_no], info);
+		printf("sent %i\n", info.id);
 		//Wait until the office has served us
 		info = receive(answer_Q[info.id]);
 		printf("student %i completed at office %i\n", info.id, info.office_no);
@@ -208,8 +218,12 @@ void* student(void* arg) {
 	pthread_mutex_lock(&num_students.lock);
 	num_students.num--;
 	if (num_students.num == 0) {
+		pthread_mutex_unlock(&num_students.lock);
+		printf("end\n");
+		return arg;
 		//last student to terminate
 	} else {
+		pthread_mutex_unlock(&num_students.lock);
 		printf("thread %i exits\n", info.id);
 		pthread_exit(arg);
 	}
