@@ -63,6 +63,23 @@ Cond* cond_init(int n) {
 	return cond;
 }
 
+void send (Buffer* buf, Info info) {
+	pthread_mutex_lock(&buf->lock);
+	buf->buffer[buf->in] = info;
+	buf->in++;
+	//TO DO : in case of buffer overflow
+	pthread_mutex_unlock(&buf->lock);
+}
+
+Info receive(Buffer* buf) {
+	pthread_mutex_lock(&buf->lock);
+	Info info = buf->buffer[buf->out];
+	buf->out++;
+	//TO DO : cyclic buffer
+	pthread_mutex_unlock(&buf->lock);
+	return info;
+}
+
 void* office(void* arg) {
 	int* office_number = (int*)arg;
 	//Initialisation of the urgent queue for this office
@@ -72,5 +89,9 @@ void* office(void* arg) {
 }
 
 void* student(void* arg) {
+	int* student_number = (int*)arg;
+	//Initialisation of the answer queue for this student
+	answer_Q = B_init(3);
+
 	return arg;
 }
