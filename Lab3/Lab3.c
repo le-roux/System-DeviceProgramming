@@ -8,6 +8,8 @@ void* student(void*);
 void* office(void*);
 void* special_office(void*);
 
+int end = 0;
+
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		printf("Syntax : %s number_of_students\n", argv[0]);
@@ -51,7 +53,7 @@ int main(int argc, char* argv[]) {
 	//Creation of the special office thread
 	pthread_t special_thread;
 	pthread_create(&special_thread, NULL, special_office, NULL);
-	while(1);
+	while(end == 0);
 	return 0;
 }
 
@@ -82,6 +84,7 @@ Cond* cond_init(int n) {
 
 void send (Buffer* buf, Info info) {
 	pthread_mutex_lock(&buf->lock);
+	//Wait for free space
 	while (buf->count == buf->dim) {
 		pthread_cond_wait(buf->notfull, &buf->lock);
 	}
@@ -96,11 +99,10 @@ void send (Buffer* buf, Info info) {
 		if (buf == urgent_Q[info.office_no]) {
 			cond->urgent[info.office_no]++;
 			printf("urgent++ for %i\n", info.id);
-			printf("%i\n", cond->urgent[info.office_no]);
 		} else if (buf == special_Q) {
 			cond->urgent[NUM_OFFICES]++;
 		}
-	} else if (info.urgent == 0)
+	} else if (buf == normal_Q)
 	{
 		cond->normal++;
 	}
@@ -116,7 +118,10 @@ Info receive(Buffer* buf) {
 	}
 	Info info = buf->buffer[buf->out];
 	buf->out++;
-	//TO DO : cyclic buffer
+	//Cyclic buffer
+	if (buf->out == buf->dim) {
+		buf->out = 0;
+	}
 	buf->count--;
 	pthread_cond_broadcast(buf->notfull);
 	pthread_mutex_unlock(&buf->lock);
@@ -133,8 +138,11 @@ void* office(void* arg) {
 	while(1) {
 		pthread_mutex_lock(&cond->lock);
 		while (cond->urgent[*office_number] == 0 && cond->normal == 0) {
+			printf("office %i waits\n", *office_number);
 			pthread_cond_wait(cond->cond, &cond->lock);
+			printf("office %i awakes\n", *office_number);
 		}
+		printf("work %i\n", *office_number);
 		if (cond->urgent[*office_number] != 0) {
 			//Serve urgent request
 			printf("served urgent office %i\n",*office_number);
@@ -147,6 +155,10 @@ void* office(void* arg) {
 			send(answer_Q[info.id], info);
 		} else {
 			//Serve normal request
+			printf("normal(%i) %i\n", cond->normal, *office_number);
+			pthread_mutex_lock(&normal_Q->lock);
+			printf("count : %i\n", normal_Q->count);
+			pthread_mutex_unlock(&normal_Q->lock);
 			cond->normal--;
 			pthread_mutex_unlock(&cond->lock);
 			info = receive(normal_Q);
@@ -162,6 +174,7 @@ void* office(void* arg) {
 			}
 			send(answer_Q[info.id], info);
 		}
+		printf("loop %i\n", *office_number);
 	}
 	return arg;
 }
@@ -208,7 +221,6 @@ void* student(void* arg) {
 		printf("student %i going back to office %i\n", info.id, info.office_no);
 		//Go to the urgent queue of the proper office
 		send(urgent_Q[info.office_no], info);
-		printf("sent %i\n", info.id);
 		//Wait until the office has served us
 		info = receive(answer_Q[info.id]);
 		printf("student %i completed at office %i\n", info.id, info.office_no);
@@ -221,7 +233,7 @@ void* student(void* arg) {
 	if (num_students.num == 0) {
 		pthread_mutex_unlock(&num_students.lock);
 		printf("end\n");
-		return arg;
+		end = 1;
 		//last student to terminate
 	} else {
 		pthread_mutex_unlock(&num_students.lock);
