@@ -41,6 +41,11 @@ int main(int argc, char* argv[]) {
 		*pi = i;
 		pthread_create(&offices_threads[i], NULL, office, pi);
 	}
+
+	//Creation of the special office thread
+	pthread_t special_thread;
+	pthread_create(&special_thread, NULL, special_office, NULL);
+
 	return 0;
 }
 
@@ -98,8 +103,21 @@ void* office(void* arg) {
 	//Initialisation of the urgent queue for this office
 	urgent_Q[*office_number] = B_init(k/2);
 
+	Info info;
+	int urgent;
 	while(1) {
-
+		info = receive(normal_Q);
+		printf("student %i received answer from office %i\n", info.id, *office_number);
+		sleep(rand() % 4 + 3);
+		info.office_no = *office_number;
+		urgent = rand() % 10;
+		if (urgent < 4) {
+			//Special student
+			info.urgent = 1;
+		} else {
+			info.urgent = 0;
+		}
+		send(answer_Q[info.id], info);
 	}
 	return arg;
 }
@@ -113,7 +131,6 @@ void* special_office(void* arg) {
 		info.urgent = 0; //not sure
 		send(answer_Q[info.id], info);
 	}
-
 	return arg;
 }
 
