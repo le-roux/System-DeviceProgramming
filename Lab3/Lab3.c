@@ -93,11 +93,11 @@ void send (Buffer* buf, Info info) {
 	//Set the value in Cond
 	pthread_mutex_lock(&cond->lock);
 	if (info.urgent == 1) {
-		if (buf == urgent_Q[info.id]) {
-			cond->urgent[info.id]++;
+		if (buf == urgent_Q[info.office_no]) {
+			cond->urgent[info.office_no]++;
 			printf("urgent++ for %i\n", info.id);
+			printf("%i\n", cond->urgent[info.office_no]);
 		} else if (buf == special_Q) {
-			printf("special for %i\n", info.id);
 			cond->urgent[NUM_OFFICES]++;
 		}
 	} else if (info.urgent == 0)
@@ -137,6 +137,7 @@ void* office(void* arg) {
 		}
 		if (cond->urgent[*office_number] != 0) {
 			//Serve urgent request
+			printf("served urgent office %i\n",*office_number);
 			cond->urgent[*office_number]--;
 			pthread_mutex_unlock(&cond->lock);
 			info = receive(urgent_Q[*office_number]);
