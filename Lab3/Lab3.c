@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <stdlib.h>
+#include <time.h>
 #include "office.h"
 
 void* student(void*);
 void* office(void*);
+void* special_office(void*);
 
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
@@ -15,7 +18,7 @@ int main(int argc, char* argv[]) {
 	num_students.num = atoi(argv[1]);
 	pthread_mutex_unlock(&num_students.lock);
 	k = atoi(argv[1]);
-
+	srand(time(NULL));
 	//Creation of the queues
 	normal_Q = B_init(k);
 	special_Q = B_init(k);
@@ -101,11 +104,26 @@ void* office(void* arg) {
 	return arg;
 }
 
+void* special_office(void* arg) {
+	Info info;
+	while(1) {
+		info = receive(special_Q);
+		printf("student %i served by the special office\n", info.id);
+		sleep(rand() % 4 + 3);
+		info.urgent = 0; //not sure
+		send(answer_Q[info.id], info);
+	}
+
+	return arg;
+}
+
 void* student(void* arg) {
 	int* student_number = (int*)arg;
 	//Initialisation of the answer queue for this student
 	answer_Q[student_number] = B_init(3);
 	volatile Info info = {*student_number, NUM_OFFICES, 0};
+
+	sleep(rand() % 9 + 1);
 	
 	//Go in the normal queue
 	send(normal_Q, info);
@@ -129,5 +147,6 @@ void* student(void* arg) {
 		//nothing to do
 	}
 	printf("student %i terminated after service at office %i\n", info.id, info.office_no);
+	//TO DO : check if it's the last student to terminate
 	return arg;
 }
