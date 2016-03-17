@@ -63,6 +63,8 @@ int main(int argc, char* argv[]) {
 		pthread_join(threads_writer[i], &ret);
 	}
 
+	free(library);
+	free(count);
 	return 0;
 }
 
@@ -101,6 +103,7 @@ void* reader(void* arg) {
 		pthread_mutex_unlock(&library->lock);
 	}
 	pthread_mutex_unlock(&count->lock);
+	free(arg);
 	return arg;
 }
 
@@ -115,11 +118,11 @@ void* writer(void* arg) {
 	/*
 	 * CRITICAL REGION
 	 */
-	 sleep(rand() % 6 + 1);
-	 library->counter++;
-	 printf("Value updated by %i\n", *i);
-	 //Leave the library
-	 pthread_mutex_unlock(&library->lock);
-
+	sleep(rand() % 6 + 1);
+	library->counter++;
+	printf("Value updated by %i\n", *i);
+	//Leave the library
+	pthread_mutex_unlock(&library->lock);
+	free(arg);
 	return arg;
 }
