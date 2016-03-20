@@ -2,10 +2,22 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <time.h>
+#include <signal.h>
 #include "office.h"
 
+/*
+ * The function executed by the threads reprensenting the students
+ */
 void* student(void*);
+
+/*
+ * The function executed by the threads reprensenting the 'normal' offices
+ */
 void* office(void*);
+
+/*
+ * The function executed by the thread representing the 'special' office
+ */
 void* special_office(void*);
 
 int end = 0;
@@ -15,6 +27,7 @@ int main(int argc, char* argv[]) {
 		printf("Syntax : %s number_of_students\n", argv[0]);
 		return 1;
 	}
+	
 	//Initialisation of num_students
 	num_students = *(Num_students*)malloc(sizeof(Num_students));
 	pthread_mutex_init(&num_students.lock, NULL);
@@ -22,16 +35,16 @@ int main(int argc, char* argv[]) {
 	num_students.num = atoi(argv[1]);
 	pthread_mutex_unlock(&num_students.lock);
 	
+	//Init
 	k = atoi(argv[1]);
 	srand(time(NULL));
+	cond = cond_init(NUM_OFFICES + 1);
+
 	//Creation of the queues
 	normal_Q = B_init(k);
 	special_Q = B_init(k);
 	urgent_Q = (Buffer**)malloc(sizeof(Buffer*) * NUM_OFFICES);
 	answer_Q = (Buffer**)malloc(sizeof(Buffer*) * k);
-
-	
-	cond = cond_init(NUM_OFFICES + 1);
 
 	int* pi;
 	//Creation of the students threads
@@ -39,7 +52,10 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < k; i++) {
 		pi = (int*)malloc(sizeof(int));
 		*pi = i;
-		pthread_create(&students_threads[i], NULL, student, pi); 
+		if (pthread_create(&students_threads[i], NULL, student, pi)) {
+			printf("Error while creating student thread #%i\n", i);
+			return 1;
+		}
 	}
 
 	//Creation of the offices threads
@@ -47,14 +63,22 @@ int main(int argc, char* argv[]) {
 	for (int i = 0; i < NUM_OFFICES; i++) {
 		pi = (int*)malloc(sizeof(int));
 		*pi = i;
-		pthread_create(&offices_threads[i], NULL, office, pi);
+		if (pthread_create(&offices_threads[i], NULL, office, pi)) {
+			printf("Error while creating office thread #%i\n", i);
+			return 1;
+		}
 	}
 
 	//Creation of the special office thread
 	pthread_t special_thread;
-	pthread_create(&special_thread, NULL, special_office, NULL);
-	while(end == 0);
-	return 0;
+	if (pthread_create(&special_thread, NULL, special_office, NULL)) {
+		printf("Error while creating special office thread\n");
+		return 1;
+	}
+
+	//End of the main thread
+	void* ret;
+	pthread_exit(&ret);
 }
 
 Buffer* B_init(int dim) {
@@ -221,9 +245,9 @@ void* student(void* arg) {
 	pthread_mutex_lock(&num_students.lock);
 	num_students.num--;
 	if (num_students.num == 0) {
+		//Last student to terminate
 		pthread_mutex_unlock(&num_students.lock);
-		end = 1;
-		//last student to terminate
+		kill(getpid(), SIGTERM);
 	} else {
 		pthread_mutex_unlock(&num_students.lock);
 		pthread_exit(arg);
