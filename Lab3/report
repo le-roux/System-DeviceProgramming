@@ -1,0 +1,54 @@
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab3$ make
+cc -std=gnu99 -Wall -Wextra -lpthread    Lab3.c   -o Lab3
+sylvain@debian:~/Documents/System-DeviceProgramming/Lab3$ ./Lab3 10
+student 4 received answer from office 0
+student 0 received answer from office 1
+student 9 received answer from office 2
+student 5 received answer from office 3
+student 2 received answer from office 2
+student 9 terminated after service at office 2
+student 9 terminated after service at office 2
+student 0 terminated after service at office 1
+student 0 terminated after service at office 1
+student 6 received answer from office 1
+student 7 received answer from office 0
+student 4 terminated after service at office 0
+student 4 going from normal office to the special office
+student 4 served by the special office
+student 3 received answer from office 3
+student 5 terminated after service at office 3
+student 5 terminated after service at office 3
+student 1 received answer from office 2
+student 2 terminated after service at office 2
+student 2 terminated after service at office 2
+student 7 terminated after service at office 0
+student 7 going from normal office to the special office
+student 4 going back to office 0
+student 7 served by the special office
+student 4 received answer from office 0
+student 8 received answer from office 0
+student 4 completed at office 0
+student 4 terminated after service at office 0
+student 6 terminated after service at office 1
+student 6 terminated after service at office 1
+student 1 terminated after service at office 2
+student 1 terminated after service at office 2
+student 3 terminated after service at office 3
+student 3 going from normal office to the special office
+student 3 served by the special office
+student 7 going back to office 0
+student 7 received answer from office 0
+student 8 terminated after service at office 0
+student 8 going from normal office to the special office
+student 7 completed at office 0
+student 7 terminated after service at office 0
+student 8 served by the special office
+student 3 going back to office 3
+student 3 received answer from office 3
+student 3 completed at office 3
+student 3 terminated after service at office 3
+student 8 going back to office 0
+student 8 received answer from office 0
+student 8 completed at office 0
+student 8 terminated after service at office 0
+Complété
