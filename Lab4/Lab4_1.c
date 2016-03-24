@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 	srand(time(NULL));
 	FILE* f = fopen(argv[2], "wb");
 	for (int i = 0; i < n; i++) {
-		int a = rand() % 100;
+		int a = rand();
 		fwrite(&a, sizeof(int), 1, f);
 		printf("%i ", a);
 	}

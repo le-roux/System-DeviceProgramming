@@ -11,6 +11,8 @@
 #include <signal.h>
 
 typedef struct Region {
+	//Size of a normal region. Note that the last one may have a different length.
+	int region_length;
 	int* left;
 	int* right;
 } Region;
@@ -25,7 +27,7 @@ typedef struct Barrier {
 void* thread_sort(void*);
 
 Barrier barrier;
-int nthreads, region_length, *paddr, len, n;
+int nthreads, *paddr, n;
 
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	//Length of the file, in bytes
-	len = stat_buf.st_size;
+	int len = stat_buf.st_size;
 	//Number of int in the file
 	n = len / sizeof(int);
 
@@ -58,10 +60,12 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	close(fd);
+	
 	nthreads = ceil(log10(n));
 	printf("nthreads = %i\n", nthreads);
+	
 	//Length of a region (except the last one)
-	region_length = n / nthreads;
+	int region_length = n / nthreads;
 
 	//Initialisation of the barrier
 	pthread_mutex_init(&barrier.lock, NULL);
@@ -74,9 +78,9 @@ int main(int argc, char* argv[]) {
 	//Creation of the regions & launching of the threads
 	Region *regions[nthreads];
 	pthread_t threads[nthreads];
-	printf("nthreads = %i\n", nthreads);
 	for (int i = 0; i < nthreads; i++) {
 		regions[i] = (Region*)malloc(sizeof(Region));
+		regions[i]->region_length = region_length;
 		regions[i]->left = paddr + i * region_length;
 		if (i == nthreads - 1) {
 			regions[i]->right = paddr + n - 1;
@@ -88,11 +92,13 @@ int main(int argc, char* argv[]) {
 			return 1;
 		}
 	}
+
 	void* ret = NULL;
 	pthread_exit(ret);
 	return 0;
 }
 
+//Swaps two numbers
 void swap(int* a, int* b) {
 	int tmp = *a;
 	*a = *b;
@@ -112,23 +118,28 @@ void* thread_sort(void* arg) {
 			}
 			cur++;
 		}
+		//Barrier
 		pthread_mutex_lock(&barrier.lock);
 		barrier.counter--;
 		if (barrier.counter == 0) {
+			//Last thread to reach the barrier
 			//Swap borders
 			int swapped = 0;
 			for (int i = 1; i < nthreads; i++) {
-				if (*(paddr + i * region_length - 1) > *(paddr + i * region_length)) {
-					swap(paddr + i * region_length - 1, paddr + i * region_length);
+				if (*(paddr + i * region->region_length - 1) > *(paddr + i * region->region_length)) {
+					//A swap at a border is necessary
+					swap(paddr + i * region->region_length - 1, paddr + i * region->region_length);
 					swapped = 1;
 				}
 			}
 			if (swapped) {
+				//A swap at a border occured, regions must be sorted again
 				for (int i = 0; i < nthreads; i++) {
 					sem_post(&barrier.sem);
 				}
 			} else {
-				int* cur = paddr;
+				//The file is fully sorted
+				cur = paddr;
 				int i = 0;
 				while (cur < paddr + n) {
 					printf("%i : %i\n", i, *cur);
@@ -139,7 +150,10 @@ void* thread_sort(void* arg) {
 			}
 		}
 		pthread_mutex_unlock(&barrier.lock);
+		
 		sem_wait(&barrier.sem);
+		
+		//second part of the barrier, needed because threads loop
 		pthread_mutex_lock(&barrier.lock);
 		barrier.counter++;
 		if (barrier.counter == nthreads) {
