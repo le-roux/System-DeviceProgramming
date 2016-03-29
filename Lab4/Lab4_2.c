@@ -8,7 +8,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <semaphore.h>
-#include <signal.h>
 
 typedef struct Region {
 	//Size of a normal region. Note that the last one may have a different length.
@@ -146,7 +145,7 @@ void* thread_sort(void* arg) {
 					cur++;
 					i++;
 				}
-				kill(getpid(), SIGTERM);
+				exit(EXIT_SUCCESS);
 			}
 		}
 		pthread_mutex_unlock(&barrier.lock);
