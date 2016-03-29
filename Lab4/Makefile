@@ -1,4 +1,4 @@
-CFLAGS := -Wall -Wextra -std=gnu99 -lm -lpthread
+CFLAGS := -Wall -Wextra -std=gnu99 -lm -lpthread -g
 .PHONY := main clean
 
 main : Lab4_1 Lab4_2
