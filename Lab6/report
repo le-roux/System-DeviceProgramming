@@ -1,0 +1,35 @@
+Ex 1: 
+Syscall number :
+6  *18	//Read  -->Read the command from the command line
+1		//Fork	-->Fork the shell for creating another process    --that will itself create the two for the commands?
+3		//Wait			-->The shell process wait for the command to return
+[Switching to thread 1]
+13		//Sbrk	-->Allocate more memory for the process
+4		//Pipe	-->Create the pipe to allow the two processes to communicate
+1		//Fork	-->Fork the shell for creating another process
+26		//Close
+11		//Dup	-->Duplicate a file descriptor
+1		//Fork	-->??			-->For the current process for creating another one
+26	*2	//Close
+8		//Exec	-->One of the new process becomes cat
+26  *3	//Close
+11		//Dup	-->Duplicate a file descriptor
+3		//Wait					-->Send the creator process in the wait state
+26  *2	//Close
+8		//Exec	-->The other new process becomes wc
+20		//Open	-->Open the file myname.txt
+6		//Read	-->Read it
+21		//Write	-->Send data to the pipe
+6		//Read
+26		//Close	-->Close the file myname.txt
+2		//Exit			-->One of the created process exit (cat??)
+3		//Wait
+6   *2	//Read	-->Read from the pipe
+21  *?	//Write	-->Write the result on the terminal
+2   *2	//Exit			-->The two last created processes (wc & creator process) exits
+21  *2	//Write	-|
+				 |-Prompt a new command line
+6		//Read	-|
+//END
+
+The different "close" system calls without explanation are probably used to close stdin/stdout/stderr file descriptors.
