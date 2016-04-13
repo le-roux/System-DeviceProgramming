@@ -30,7 +30,8 @@
 
 #define SYS_cond_alloc	 27
 #define SYS_cond_set	 28
-#define SYS_cond_destroy 29
-#define SYS_cond_wait	 30
-#define SYS_cond_signal	 31
-#define SYS_cond_broadcast 32
+#define SYS_cond_get	 29
+#define SYS_cond_destroy 30
+#define SYS_cond_wait	 31
+#define SYS_cond_signal	 32
+#define SYS_cond_broadcast 33

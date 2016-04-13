@@ -105,6 +105,7 @@ extern int sys_sem_wait(void);
 extern int sys_sem_post(void);
 extern int sys_cond_alloc(void);
 extern int sys_cond_set(void);
+extern int sys_cond_get(void);
 extern int sys_cond_destroy(void);
 extern int sys_cond_wait(void);
 extern int sys_cond_signal(void);
@@ -139,6 +140,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_cond_alloc]	sys_cond_alloc,
 [SYS_cond_set]		sys_cond_set,
+[SYS_cond_get]		sys_cond_get,
 [SYS_cond_destroy]	sys_cond_destroy,
 [SYS_cond_wait]		sys_cond_wait,
 [SYS_cond_signal]	sys_cond_signal,

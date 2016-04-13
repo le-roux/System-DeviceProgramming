@@ -29,7 +29,7 @@ int sem_destroy (int sn);
 int sem_wait (int sn);
 int sem_post (int sn);
 int cond_alloc();
-void cond_set(int cond);
+void cond_set(int cond, int val);
 int cond_get(int cond);
 void cond_destroy(int cond);
 void cond_wait(int cond);
