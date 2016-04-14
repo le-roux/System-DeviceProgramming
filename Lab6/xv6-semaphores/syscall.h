@@ -35,3 +35,5 @@
 #define SYS_cond_wait	 31
 #define SYS_cond_signal	 32
 #define SYS_cond_broadcast 33
+#define SYS_cond_lock	 34
+#define SYS_cond_unlock	 35

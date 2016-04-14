@@ -17,8 +17,7 @@ char name[3];
 int stdout = 1;
 int counter = 0;
 
-void
-condition_test(void) {
+void condition_test(void) {
   int pid;
   int cond;
 
@@ -47,14 +46,12 @@ condition_test(void) {
 			cond_wait(cond);
 		printf (stdout, "signal received\n");
 		cond_set(cond, 0);
-	}    
+	}
 	exit();
   }
 }
 
-
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   condition_test();
   exit();

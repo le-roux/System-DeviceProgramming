@@ -22,6 +22,8 @@ void cond_destroy(int cond);
 void cond_wait(int cond);
 void cond_signal(int cond);
 void cond_broadcast(int cond);
+void cond_lock(int cond);
+void cond_unlock(int cond);
 
 int sys_cond_alloc(void) {
 	int cond;
@@ -84,6 +86,23 @@ int sys_cond_broadcast(void) {
 	return 0;
 }
 
+int sys_cond_lock(void) {
+	int cond;
+	argint(0, &cond);
+	if (cond < 0 || cond >= NCOND_MAX)
+		return -1;
+	cond_lock(cond);
+	return 0;
+}
+
+int sys_cond_unlock(void) {
+	int cond;
+	argint(0, &cond);
+	if (cond < 0 || cond >= NCOND_MAX)
+		return -1;
+	cond_unlock();
+	return 0;
+}
 
 int sem_init (int sn, int n);
 int sem_destroy (int sn);

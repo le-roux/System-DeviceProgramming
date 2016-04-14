@@ -110,6 +110,8 @@ extern int sys_cond_destroy(void);
 extern int sys_cond_wait(void);
 extern int sys_cond_signal(void);
 extern int sys_cond_broadcast(void);
+extern int sys_cond_lock(void);
+extern int sys_cond_unlock(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -144,7 +146,9 @@ static int (*syscalls[])(void) = {
 [SYS_cond_destroy]	sys_cond_destroy,
 [SYS_cond_wait]		sys_cond_wait,
 [SYS_cond_signal]	sys_cond_signal,
-[SYS_cond_broadcast] sys_cond_broadcast
+[SYS_cond_broadcast] sys_cond_broadcast,
+[SYS_cond_lock]		sys_cond_lock,
+[SYS_cond_unlock]	sys_cond_unlock
 };
 
 void

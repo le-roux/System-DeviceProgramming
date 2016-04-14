@@ -21,6 +21,17 @@ struct {
   struct semaphore semaphore[NSEM_MAX];
 } semaphore_table;
 
+struct mutex {
+	struct spinlock lock;
+	int locked; //Locked or not
+	int ref; //Assigned or not
+	uint q;
+};
+
+struct {
+	struct spinlock lock;
+	struct mutex mutex[NCOND_MAX];
+} mutex_table;
 
 struct condition {
 	struct spinlock lock;
@@ -255,6 +266,30 @@ filewrite(struct file *f, char *addr, int n)
   panic("filewrite");
 }
 
+//Initialise the mutex table
+void mutex_init() {
+	initlock(&mutex_table.lock, "mutex table");
+}
+
+void cond_lock(int cond) {
+	struct mutex* mutex;
+	mutex = &mutex_table.mutex[cond];
+	acquire(&mutex->lock);
+	while (mutex->count == 0) {
+		sleep(&mutex->q, &mutex->lock);
+	}
+	mutex->count = 0;
+	release(&mutex->lock);
+}
+
+void cond_unlock(int cond) {
+	struct mutex* mutex;
+	mutex = &mutex_table.mutex[cond];
+	acquire(&mutex->lock);
+	mutex->count = 1;
+	release(&mutex->lock);
+}
+
 //Initialise the condition table
 void condition_init(void) {
 	initlock(&condition_table.lock, "condition table");
@@ -263,17 +298,23 @@ void condition_init(void) {
 //Alloc a condition structure
 int cond_alloc(void) {
 	struct condition* cond;
+	struct mutex* mutex;
 	int counter;
 	acquire(&condition_table.lock);
+	acquire(&mutex_table.lock);
 	for (counter = 0; counter < NCOND_MAX; counter++) {
 		cond = &condition_table.condition[counter];	
+		mutex = &mutex_table.mutex[counter];
 		if (cond->ref == 0) {
 			cond->ref = 1;
+			mutex->count = 1;
+			release(&mutex_table.lock);
 			release(&condition_table.lock);
 			return counter;
 		}
 		counter++;
 	}
+	release(&mutex_table.lock);
 	release(&condition_table.lock);
 	return -1;
 }
@@ -305,7 +346,9 @@ void cond_destroy(int cond) {
 void cond_wait(int cond) {
 	struct condition* condition = &condition_table.condition[cond];
 	acquire(&condition->lock);
+	cond_unlock(cond);
 	sleep(&condition->alarm_clock, &condition->lock);
+	cond_lock(cond);
 	release(&condition->lock);
 }
 
@@ -320,9 +363,6 @@ void cond_broadcast(int cond) {
 	struct condition* condition = &condition_table.condition[cond];
 	wakeup(&condition->alarm_clock);
 }
-
-
-
 
 
 

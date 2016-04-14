@@ -36,6 +36,8 @@ void cond_wait(int cond);
 void cond_signal(int cond);
 void cond_signal(int cond);
 void cond_broadcast(int cond);
+void cond_lock(int cond);
+void cond_unlock(int cond);
 
 // ulib.c
 int stat(char*, struct stat*);
