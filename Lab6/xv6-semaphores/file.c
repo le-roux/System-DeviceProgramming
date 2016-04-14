@@ -275,10 +275,10 @@ void cond_lock(int cond) {
 	struct mutex* mutex;
 	mutex = &mutex_table.mutex[cond];
 	acquire(&mutex->lock);
-	while (mutex->count == 0) {
+	while (mutex->locked == 0) {
 		sleep(&mutex->q, &mutex->lock);
 	}
-	mutex->count = 0;
+	mutex->locked = 0;
 	release(&mutex->lock);
 }
 
@@ -286,7 +286,7 @@ void cond_unlock(int cond) {
 	struct mutex* mutex;
 	mutex = &mutex_table.mutex[cond];
 	acquire(&mutex->lock);
-	mutex->count = 1;
+	mutex->locked = 1;
 	release(&mutex->lock);
 }
 
@@ -307,7 +307,7 @@ int cond_alloc(void) {
 		mutex = &mutex_table.mutex[counter];
 		if (cond->ref == 0) {
 			cond->ref = 1;
-			mutex->count = 1;
+			mutex->locked = 1;
 			release(&mutex_table.lock);
 			release(&condition_table.lock);
 			return counter;

@@ -26,15 +26,19 @@ void condition_test(void) {
   printf(stdout, "A\n");
   pid = fork();
   if (pid) {
+	sleep(20);
 	for (counter = 0; counter < COUNT; counter++) {
+		cond_lock(cond);
 		cond_set(cond, cond_get(cond) + 1);
 		if (cond_get(cond) == COUNT_LIMIT) {
 			cond_signal(cond);
-			printf(stdout, "signal");
-			sleep(10);
+			printf(stdout, "signal\n");
 		}
+		cond_unlock(cond);
+		sleep(10);
 	}
    	wait();
+	printf(stdout, "destroy\n");
    	cond_destroy(cond);
 	exit();
   }
@@ -42,8 +46,12 @@ void condition_test(void) {
     sleep(5);
     printf (stdout,  "B\n");
 	while (1) {
-		while (cond_get(cond) < COUNT_LIMIT)
+		cond_lock(cond);
+		while (cond_get(cond) < COUNT_LIMIT) {
+			printf(stdout, "waiting\n");
 			cond_wait(cond);
+		}
+		cond_unlock(cond);
 		printf (stdout, "signal received\n");
 		cond_set(cond, 0);
 	}

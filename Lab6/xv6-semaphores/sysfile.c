@@ -100,7 +100,7 @@ int sys_cond_unlock(void) {
 	argint(0, &cond);
 	if (cond < 0 || cond >= NCOND_MAX)
 		return -1;
-	cond_unlock();
+	cond_unlock(cond);
 	return 0;
 }
 
