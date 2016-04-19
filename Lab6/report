@@ -1,6 +1,6 @@
 Ex 1: 
 Syscall number :
-6  *18	//Read  -->Read the command from the command line
+6  *18	//Read  -->Read the command from the command line (each 'read' system call reads only one character)
 1		//Fork	-->Fork the shell for creating another process(called parent process in the following), that will itself create the two processes that will execute the commands
 3		//Wait	-->The shell process wait for the command to return
 [Switching to thread 1]
@@ -18,14 +18,14 @@ Syscall number :
 26  *2	//Close	
 8		//Exec	-->The other new process becomes wc
 20		//Open	-->Open the file myname.txt
-6		//Read	-->Read it
-21		//Write	-->Send data to the pipe
+6		//Read	-->Read it (it reads the whole content of the file in this single system call)
+21		//Write	-->Send data to the pipe (the whole content of the file is sent)
 6		//Read
 26		//Close	-->Close the file myname.txt
-2		//Exit	-->One of the created processes exit (the one that executed the cat command)
+2		//Exit	-->One of the created processes exit (probably the one that executed the cat command)
 3		//Wait
-6   *2	//Read	-->Read from the pipe
-21  *?	//Write	-->Write the result on the terminal
+6   *2	//Read	-->Read from the pipe (the first time, it reads data and the second time, it reads the character '\000')
+21  *6	//Write	-->Write the result on the terminal (each 'write' system call writes a single character in the shell)
 2   *2	//Exit	-->The two last created processes (wc & parent process) exits
 21  *2	//Write	-|
 				 |-Prompt a new command line
