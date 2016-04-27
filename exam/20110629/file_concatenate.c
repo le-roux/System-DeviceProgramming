@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
 	directory->dir = opendir(argv[2]);
 	chdir(argv[2]);	
 	mkdir("./tmp", 0777);
-	chdir("..");
 	if (directory->dir == NULL) {
 		printf("Error when opening directory\n");
 		printf("errno = %s\n", strerror(errno));
@@ -56,6 +55,7 @@ void* thread_func(void* arg) {
 	struct dirent* filehead1 = (struct dirent*)malloc(sizeof(struct dirent));
 	struct dirent* filehead2 = (struct dirent*)malloc(sizeof(struct dirent));
 	int file1, file2;
+	struct stat status;
 	pthread_mutex_lock(&directory->dir_lock);
 	while ((filehead1 = readdir(directory->dir)) && (filehead2 = readdir(directory->dir))) {
 		if(filehead1 == NULL || filehead2 == NULL)
@@ -72,17 +72,51 @@ void* thread_func(void* arg) {
 		}
 		file1 = open(filehead1->d_name, O_RDONLY);
 		printf("opened %s\n", filehead1->d_name);
+		if(file1 == -1)
+			printf("pb opening file 1 : errno = %s\n", strerror(errno));
+		fstat(file1, &status);
+		if (status.st_mode & S_IFDIR) {
+			printf("it's a directory\n");
+			close(file1);
+			continue;
+		}
 		file2 = open(filehead2->d_name, O_RDONLY);
+		if (file2 == -1)
+			printf("pb opening file 2 : errno = %s\n", strerror(errno));
+		fstat(file2, &status);
+		if (status.st_mode & S_IFDIR) {
+			printf("It's a directory\n");
+			close(file2);
+			continue;
+		}
 		printf("opened %s\n", filehead2->d_name);
 		unlink(filehead1->d_name);
 		unlink(filehead2->d_name);
-		int length = strlen(filehead1->d_name) + strlen(filehead2->d_name) + strlen("./tmp/");
+		int length = strlen(filehead1->d_name) + strlen(filehead2->d_name) + strlen("tmp/");
 		char filename[length];
-		strcpy(filename, "./tmp/");
+		strcpy(filename, "tmp/");
 		strcat(filename, filehead1->d_name);
 		strcat(filename, filehead2->d_name);
 		printf("new file : %s\n", filename);
-		
+		int dest = open(filename, O_WRONLY | O_CREAT);
+		if (dest == -1)
+			printf("pb openging dest file : errno = %s\n", strerror(errno));
+		else
+			printf("new file opened\n");
+		char buffer[1024];
+		int count;
+		count = read(file1, buffer, 1024);
+		while(count != 0 && count != -1) {
+			write(dest, buffer, count);
+			count = read(file1, buffer, 1024);
+		}
+		printf("errno : %s\n", strerror(errno));
+		printf("End of file 1\n");
+		while((count = read(file2, buffer, 1024))) {
+			write(dest, buffer, count);
+		}
+		printf("close %s\n", filename);
+		close(dest);
 		close(file1);
 		close(file2);
 		pthread_mutex_lock(&directory->dir_lock);
