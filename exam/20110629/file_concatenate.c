@@ -48,7 +48,10 @@ int main(int argc, char* argv[]) {
 			return 1;
 		};
 	}
-	while(1);
+	void* ret;
+	for (int i= 0; i < K; i++) {
+		pthread_join(*threads[i], &ret);
+	}
 }
 
 void* thread_func(void* arg) {
@@ -58,55 +61,61 @@ void* thread_func(void* arg) {
 	struct stat status;
 	int last_errno = errno;
 	pthread_mutex_lock(&directory->dir_lock);
-	while (1) {
+	int cont = 1, next1 = 1, next2 = 1;
+	while (cont) {
+		int rewinded = 0;
 		do {
+			last_errno = errno;
 			filehead1 = readdir(directory->dir);
 			if (filehead1 == NULL) {
 				if (errno == last_errno) {
+					if(rewinded) {
+						cont = 0;
+						break;
+					}
 					rewinddir(directory->dir);
+					rewinded = 1;
 				} else {
 					printf("reading filehead1 errno : %s\n", strerror(errno));
-					last_errno = errno;
+					cont = 0;
+					next1 = 0;
 				}
-			}
-		} while(filehead1->d_name == "." || filehead1->d_name == ".." || filehead1->d_name == "tmp")
+			} else if(!strcmp(filehead1->d_name,".") || !strcmp(filehead1->d_name,"..") || !strcmp(filehead1->d_name, "tmp")) {
+				next1 = 1;
+			} else
+				next1 = 0;
+		} while(next1);
+
+		if (cont == 0)
+			break;
+
+		rewinded = 0;
 		
 		do {
+			last_errno = errno;
 			filehead2 = readdir(directory->dir);
 			if (filehead2 == NULL) {
 				if (errno == last_errno) {
+					if(rewinded) {
+						cont = 0;
+						break;
+					}
 					rewinddir(directory->dir);
+					rewinded = 1;
 				} else {
 					printf("reading filehead2 errno : %s\n", strerror(errno));
-					last_errno = errno;
+					cont = 0;
 				}
-			}
-		} while(filehead2->d_name == "." || filehead2->d_name == ".." || filehead2->d_name == "tmp")
+			} else if (!strcmp(filehead2->d_name, ".") || !strcmp(filehead2->d_name, "..") || !strcmp(filehead2->d_name, "tmp") || !strcmp(filehead1->d_name, filehead2->d_name))
+				next2 = 1;
+			 else
+				next2 = 0;
+		} while(next2);
 		
+		if(cont == 0)
+			break;
 
-		filehead2 = readdir(directory->dir);
-		
-		if(filehead1 == NULL || filehead2 == NULL) {
-			if (errno != last_errno) {
-				printf("errno %s\n", strerror(errno));
-				break;
-			} else {
-				print("End of the directory\n");
-				rewinddir(directory->dir);
-			}
-			last_errno = errno;
-		}
 		pthread_mutex_unlock(&directory->dir_lock);
-
-		if(!strcmp(filehead1->d_name, ".") || !strcmp(filehead1->d_name, "..")) {
-			pthread_mutex_lock(&directory->dir_lock);
-			printf("1 try to read directory\n");
-			continue;
-		} else if(!strcmp(filehead2->d_name, ".") || !strcmp(filehead2->d_name, "..")) {
-			pthread_mutex_lock(&directory->dir_lock);
-			printf("2 try to read directory\n");
-			continue;
-		}
 
 		file1 = open(filehead1->d_name, O_RDONLY);
 		printf("opened %s\n", filehead1->d_name);
@@ -152,12 +161,11 @@ void* thread_func(void* arg) {
 			write(dest, buffer, count);
 		}
 		close(dest);
+		//TO DO : add the hard link
 		close(file1);
 		close(file2);
-		printf("end\n");
 		pthread_mutex_lock(&directory->dir_lock);
 	}
 	pthread_mutex_unlock(&directory->dir_lock);
-	printf("end of thread\n");
 	return arg;
 }
