@@ -56,11 +56,48 @@ void* thread_func(void* arg) {
 	struct dirent* filehead2 = (struct dirent*)malloc(sizeof(struct dirent));
 	int file1, file2;
 	struct stat status;
+	int last_errno = errno;
 	pthread_mutex_lock(&directory->dir_lock);
-	while ((filehead1 = readdir(directory->dir)) && (filehead2 = readdir(directory->dir))) {
-		if(filehead1 == NULL || filehead2 == NULL)
-			printf("errno %s\n", strerror(errno));
+	while (1) {
+		do {
+			filehead1 = readdir(directory->dir);
+			if (filehead1 == NULL) {
+				if (errno == last_errno) {
+					rewinddir(directory->dir);
+				} else {
+					printf("reading filehead1 errno : %s\n", strerror(errno));
+					last_errno = errno;
+				}
+			}
+		} while(filehead1->d_name == "." || filehead1->d_name == ".." || filehead1->d_name == "tmp")
+		
+		do {
+			filehead2 = readdir(directory->dir);
+			if (filehead2 == NULL) {
+				if (errno == last_errno) {
+					rewinddir(directory->dir);
+				} else {
+					printf("reading filehead2 errno : %s\n", strerror(errno));
+					last_errno = errno;
+				}
+			}
+		} while(filehead2->d_name == "." || filehead2->d_name == ".." || filehead2->d_name == "tmp")
+		
+
+		filehead2 = readdir(directory->dir);
+		
+		if(filehead1 == NULL || filehead2 == NULL) {
+			if (errno != last_errno) {
+				printf("errno %s\n", strerror(errno));
+				break;
+			} else {
+				print("End of the directory\n");
+				rewinddir(directory->dir);
+			}
+			last_errno = errno;
+		}
 		pthread_mutex_unlock(&directory->dir_lock);
+
 		if(!strcmp(filehead1->d_name, ".") || !strcmp(filehead1->d_name, "..")) {
 			pthread_mutex_lock(&directory->dir_lock);
 			printf("1 try to read directory\n");
@@ -70,6 +107,7 @@ void* thread_func(void* arg) {
 			printf("2 try to read directory\n");
 			continue;
 		}
+
 		file1 = open(filehead1->d_name, O_RDONLY);
 		printf("opened %s\n", filehead1->d_name);
 		if(file1 == -1)
@@ -78,6 +116,7 @@ void* thread_func(void* arg) {
 		if (status.st_mode & S_IFDIR) {
 			printf("it's a directory\n");
 			close(file1);
+			pthread_mutex_lock(&directory->dir_lock);
 			continue;
 		}
 		file2 = open(filehead2->d_name, O_RDONLY);
@@ -87,6 +126,7 @@ void* thread_func(void* arg) {
 		if (status.st_mode & S_IFDIR) {
 			printf("It's a directory\n");
 			close(file2);
+			pthread_mutex_lock(&directory->dir_lock);
 			continue;
 		}
 		printf("opened %s\n", filehead2->d_name);
@@ -101,8 +141,6 @@ void* thread_func(void* arg) {
 		int dest = open(filename, O_WRONLY | O_CREAT);
 		if (dest == -1)
 			printf("pb openging dest file : errno = %s\n", strerror(errno));
-		else
-			printf("new file opened\n");
 		char buffer[1024];
 		int count;
 		count = read(file1, buffer, 1024);
@@ -110,17 +148,16 @@ void* thread_func(void* arg) {
 			write(dest, buffer, count);
 			count = read(file1, buffer, 1024);
 		}
-		printf("errno : %s\n", strerror(errno));
-		printf("End of file 1\n");
 		while((count = read(file2, buffer, 1024))) {
 			write(dest, buffer, count);
 		}
-		printf("close %s\n", filename);
 		close(dest);
 		close(file1);
 		close(file2);
+		printf("end\n");
 		pthread_mutex_lock(&directory->dir_lock);
 	}
 	pthread_mutex_unlock(&directory->dir_lock);
+	printf("end of thread\n");
 	return arg;
 }
