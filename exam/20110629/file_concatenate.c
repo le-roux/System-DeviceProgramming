@@ -161,7 +161,12 @@ void* thread_func(void* arg) {
 			write(dest, buffer, count);
 		}
 		close(dest);
-		//TO DO : add the hard link
+		length = strlen(filehead1->d_name) + strlen(filehead2->d_name);
+		char* hardlink = (char*)malloc(length * sizeof(char));
+		strcpy(hardlink, filehead1->d_name);
+		strcat(hardlink, filehead2->d_name);
+		link(filename, hardlink);
+		unlink(filename);
 		close(file1);
 		close(file2);
 		pthread_mutex_lock(&directory->dir_lock);
