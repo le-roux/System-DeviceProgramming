@@ -60,9 +60,11 @@ void* thread_func(void* arg) {
 	int file1, file2;
 	struct stat status;
 	int last_errno = errno;
-	pthread_mutex_lock(&directory->dir_lock);
-	int cont = 1, next1 = 1, next2 = 1;
+	int* index = (int*)arg;
+		int cont = 1, next1 = 1, next2 = 1;
 	while (cont) {
+		pthread_mutex_lock(&directory->dir_lock);
+		printf("thread %i enters CR\n", *index);
 		int rewinded = 0;
 		do {
 			last_errno = errno;
@@ -115,30 +117,29 @@ void* thread_func(void* arg) {
 		if(cont == 0)
 			break;
 
+		printf("thread %i exits CR\n", *index);
 		pthread_mutex_unlock(&directory->dir_lock);
 
 		file1 = open(filehead1->d_name, O_RDONLY);
-		printf("opened %s\n", filehead1->d_name);
 		if(file1 == -1)
-			printf("pb opening file 1 : errno = %s\n", strerror(errno));
+			printf("pb opening file %s : errno = %s\n",filehead1->d_name, strerror(errno));
 		fstat(file1, &status);
 		if (status.st_mode & S_IFDIR) {
 			printf("it's a directory\n");
 			close(file1);
-			pthread_mutex_lock(&directory->dir_lock);
 			continue;
 		}
+		printf("file 1 opened\n");
 		file2 = open(filehead2->d_name, O_RDONLY);
 		if (file2 == -1)
-			printf("pb opening file 2 : errno = %s\n", strerror(errno));
+			printf("pb opening file %s : errno = %s\n", filehead2->d_name, strerror(errno));
 		fstat(file2, &status);
 		if (status.st_mode & S_IFDIR) {
 			printf("It's a directory\n");
 			close(file2);
-			pthread_mutex_lock(&directory->dir_lock);
 			continue;
 		}
-		printf("opened %s\n", filehead2->d_name);
+		printf("unlink\n");
 		unlink(filehead1->d_name);
 		unlink(filehead2->d_name);
 		int length = strlen(filehead1->d_name) + strlen(filehead2->d_name) + strlen("tmp/");
@@ -162,15 +163,14 @@ void* thread_func(void* arg) {
 		}
 		close(dest);
 		length = strlen(filehead1->d_name) + strlen(filehead2->d_name);
-		char* hardlink = (char*)malloc(length * sizeof(char));
+		char hardlink[length];
 		strcpy(hardlink, filehead1->d_name);
 		strcat(hardlink, filehead2->d_name);
 		link(filename, hardlink);
+		chmod(hardlink, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 		unlink(filename);
 		close(file1);
 		close(file2);
-		pthread_mutex_lock(&directory->dir_lock);
 	}
-	pthread_mutex_unlock(&directory->dir_lock);
 	return arg;
 }

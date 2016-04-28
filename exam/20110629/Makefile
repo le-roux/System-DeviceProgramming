@@ -1,4 +1,4 @@
-CFLAGS := -std=gnu99 -lpthread -Wall -Wextra
+CFLAGS := -std=gnu99 -lpthread -Wall -Wextra -g
 TARGET := file_concatenate
 .PHONY : all clean
 
@@ -9,3 +9,4 @@ clean :
 	rm -f file_concatenate
 	rm -f ./test/tmp/*
 	rmdir ./test/tmp
+	./foo.sh
