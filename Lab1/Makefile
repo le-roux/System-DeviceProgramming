@@ -1,4 +1,4 @@
-CFLAGS := -std=gnu99 -lpthread
+CFLAGS := -std=gnu99 -lpthread -Wall -Wextra
 PHONY := clean
 
 global : Lab1.1 Lab1.2 Lab1.3

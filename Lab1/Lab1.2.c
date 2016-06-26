@@ -28,12 +28,12 @@ int main(int argc, char** argv) {
 		if (f == NULL) {
 			return 1;
 		}
-		char* line = NULL;
+		char line[100] = {};
 		size_t len = 0;
 		int line_number = 0;
 		while(1) {
 			//Print the file line by line on the standard output
-			while(getline(&line, &len, f) !=-1) {
+			while(fgets(line, 100, f) != NULL) {
 				line_number++;
 				if (print) {
 					printf("%i %s", line_number, line);	
